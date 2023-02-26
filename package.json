@@ -1,7 +1,7 @@
 {
   "name": "serverless-nodejs-app",
   "version": "1.0.0",
-  "description": "",
+  "description": "Blog url: https://github.com/daikerjohn/serverless-rest-api-with-nodejs-and-mongo",
   "main": "handler.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
@@ -10,10 +10,11 @@
   "author": "",
   "license": "ISC",
   "devDependencies": {
-    "serverless-offline": "^7.0.0"
+    "serverless": "^3.27.0",
+    "serverless-offline": "^12.0.4"
   },
   "dependencies": {
-    "dotenv": "^8.2.0",
-    "mongoose": "^5.12.7"
+    "dotenv": "^16.0.3",
+    "mongoose": "^6.10.0"
   }
 }

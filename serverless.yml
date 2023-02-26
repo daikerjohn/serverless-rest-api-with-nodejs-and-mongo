@@ -2,11 +2,11 @@ service: rest-api
 
 provider:
   name: aws
-  runtime: nodejs12.x 
+  runtime: nodejs18.x 
   memorySize: 128 
   timeout: 10 
   stage: dev 
-  region: us-east-1
+  region: us-west-2
 
 functions: 
   create:

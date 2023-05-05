@@ -1,49 +1,61 @@
-service: rest-api
-
-provider:
-  name: aws
-  runtime: nodejs18.x 
-  memorySize: 128 
-  timeout: 10 
-  stage: dev 
-  region: us-west-2
-
-functions: 
-  create:
-    handler: handler.create # point to exported create function in handler.js
-    events:
-      - http:
-          path: users 
-          method: post
-          cors: true
-  getOne:
-    handler: handler.getOne
-    events:
-      - http:
-          path: users/{id} 
-          method: get
-          cors: true
-  getAll:
-    handler: handler.getAll 
-    events:
-     - http:
-         path: users
-         method: get
-         cors: true
-  update:
-    handler: handler.update 
-    events:
-     - http:
-         path: users/{id}
-         method: put
-         cors: true
-  delete:
-    handler: handler.delete
-    events:
-     - http:
-         path: users/{id} 
-         method: delete
-         cors: true
-
-plugins:
-- serverless-offline # adding the plugin to be able to run the offline emulation
+        service: rest-api
+ 
+        provider:
+          name: aws
+          runtime: nodejs18.x 
+          memorySize: 128 
+          timeout: 10 
+          stage: dev 
+          region: us-west-2
+        
+        functions: 
+          create:
+            handler: handler.create # point to exported create function in handler.js
+            events:
+              - http:
+                  path: solar 
+                  method: post
+                  cors: true
+          getOne:
+            handler: handler.getOne
+            events:
+              - http:
+                  path: solar/{id} 
+                  method: get
+                  cors: true
+          getAll:
+            handler: handler.getAll 
+            events:
+             - http:
+                 path: solar
+                 method: get
+                 cors: true
+          update:
+            handler: handler.update 
+            events:
+             - http:
+                 path: solar/{id}
+                 method: put
+                 cors: true
+          delete:
+            handler: handler.delete
+            events:
+             - http:
+                 path: solar/{id} 
+                 method: delete
+                 cors: true
+          createTemp:
+            handler: handler.createTemp # point to exported create function in handler.js
+            events:
+              - http:
+                  path: temp
+                  method: post
+                  cors: true
+          getAllTemp:
+            handler: handler.getAllTemp 
+            events:
+             - http:
+                 path: temp
+                 method: get
+        plugins:
+        - serverless-offline # adding the plugin to be able to run the offline emulation

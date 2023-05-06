@@ -1,78 +1,204 @@
 'use strict';
 
-require('dotenv').config({ path: './variables.env' });
+// Enables JSON serialization of BigInt type
+BigInt.prototype.toJSON = function() {
+  return this.toString(16).padStart(64, '0');
+};
+
+require('dotenv').config({
+  path: './variables.env'
+});
 const connectToDatabase = require('./db');
 const HashRange = require('./models/HashRange');
+const FoundKey = require('./models/FoundKey');
 
+module.exports.foundKey = async (event, context, callback) => {
+  context.callbackWaitsForEmptyEventLoop = false;
+  var theKey = 0n;
+  if (event.pathParameters != null && event.pathParameters.key != null) {
+    console.error("with param: " + event.pathParameters.key);
+    theKey = BigInt('0x' + event.pathParameters.key);
+  }
+  console.log("theKey: " + theKey);
+  console.log("theKey: " + theKey.toString(16).padStart(64, '0'));
+  return connectToDatabase()
+    .then(() => {
+      return FoundKey.create({
+          key_hex: theKey.toString(16).padStart(64, '0')
+        })
+        .then(user => {
+          return {
+            statusCode: 200,
+            body: JSON.stringify(user)
+          };
+        })
+        .catch(err => {
+          console.error(err);
+          return {
+            statusCode: err.statusCode || 500,
+            headers: {
+              'Content-Type': 'text/plain'
+            },
+            body: 'Could not fetch the user.'
+          };
+        });
+    });
+
+}
+
+
+module.exports.finishRange = async (event, context, callback) => {
+  context.callbackWaitsForEmptyEventLoop = false;
+  var rangeId = 0;
+  if (event.pathParameters != null && event.pathParameters.id != null) {
+    console.info("with param: " + event.pathParameters.id);
+    rangeId = event.pathParameters.id.toString();
+  }
+  console.log("RangeId: " + rangeId);
+  let filter = {
+    _id: rangeId
+  };
+  let upd = {
+    completed_time: Date.now()
+  };
+  return connectToDatabase()
+    .then(() => {
+      return HashRange.updateOne(filter, upd)
+        .then(res => {
+          console.log("finishedRange: " + rangeId);
+          return {
+            statusCode: 200,
+            body: JSON.stringify({
+              success: true
+            })
+          };
+        })
+        .catch(err => {
+          console.error(err);
+          return {
+            statusCode: err.statusCode || 500,
+            headers: {
+              'Content-Type': 'text/plain'
+            },
+            body: 'Could not fetch the user.'
+          };
+        })
+    });
+}
 
 module.exports.getRange = async (event, context, callback) => {
   context.callbackWaitsForEmptyEventLoop = false;
 
-  connectToDatabase()
+  return connectToDatabase()
     .then(() => {
-      var size = 100;
-      if(event.pathParameters != null && event.pathParameters.size != null) {
-        console.error("with param: " + event.pathParameters.size);
-        size = parseInt(event.pathParameters.size);
+      var size = 100n;
+      if (event.pathParameters != null && event.pathParameters.size != null) {
+        console.info("with param: " + event.pathParameters.size);
+        size = BigInt(event.pathParameters.size);
       }
       //var next_start = findNextStart().resolve();
 
-      var next_start = 99;
-      findNextStart().then(asdf => {
-        console.error("asdf : " + asdf);
-        //next_start = asdf;
-        console.error("next_start : " + next_start);
+      //var next_start = 99;
+      //let qwerty = findNextStartt();
+      //console.log("qwerty : " + qwerty);
+      //qwerty.then(asdf => {
+      return findNextStartt().then(next_start => {
+        //console.info("typeof next_start: " + typeof next_start);
+        //console.info("typeof size: " + typeof size);
         var next_end = next_start + size;
-        console.error("next_end : " + next_end);
-        var next_start_string = next_start.toString(16);
-        var next_end_string = next_end.toString(16);
-        console.error("next_start_string : " + next_start_string);
-        console.error("next_end_string : " + next_end_string);
-        HashRange.create({start_key: next_start_string, end_key: next_end_string, requested_time: new Date().Now})
-          .then(user => callback(null, {
-            statusCode: 200,
-            body: JSON.stringify(user)
-          }))
-          .catch(err => callback(null, {
-            statusCode: err.statusCode || 500,
-            headers: { 'Content-Type': 'text/plain' },
-            body: 'Could not fetch the user.'
-          }));
+        console.info("next_end : " + next_end);
+        /*
+                var next_start_string = next_start.toString(16).padStart(64, '0');
+                var next_end_string = next_end.toString(16).padStart(64, '0');
+                console.error("next_start_string : " + next_start_string);
+                console.error("next_end_string : " + next_end_string);
+                return HashRange.create({start_key: next_start_string, end_key: next_end_string, requested_time: new Date().Now})
+        */
+        return HashRange.create({
+            start_key: next_start,
+            end_key: next_end,
+            requested_time: new Date().Now
+          })
+          .then(user => {
+            return {
+              statusCode: 200,
+              body: JSON.stringify(user)
+            };
+          })
+          .catch(err => {
+            console.error(err);
+            return {
+              statusCode: err.statusCode || 500,
+              headers: {
+                'Content-Type': 'text/plain'
+              },
+              body: 'Could not fetch the user.'
+            };
+          });
       });
-      
-      
+
+
 
     });
 };
 
-function findNextStart() {
-  let filter = { completed_time: { $gt: new Date(0)  } };
+async function finishOne(id) {
+  let filter = {
+    _id: id
+  };
+  let upd = {
+    completed_time: Date.now()
+  };
+  return HashRange.updateOne(filter, upd);
+}
+
+async function findNextStartt() {
+  let filter = {
+    completed_time: {
+      $gte: new Date(0)
+    }
+  };
+  let fields = null;
   //let filter = { completed_time: { $neq: 0 } };
-  let options = { sort: { end_key: -1 } };
-  return connectToDatabase()
-  .then(() => {
-    HashRange.findOne(filter, options)
-    .then((hr => {
-      if(hr == null || hr == undefined) {
-        hr = {}
-        hr.end_key = "0";
+  let options = {
+    sort: {
+      end_key: -1
+    }
+  };
+  //return connectToDatabase()
+  //.then(() => {
+  //return HashRange.findOne(filter, options)
+  return HashRange.findOne(filter, fields, options)
+    .then(hr => {
+      if (hr == null || hr == undefined) {
+        console.log("not found");
+        return 0n;
       }
+      console.info("hr" + JSON.stringify(hr));
       return hr;
-    }))
-    .then((hr => {
-      console.error("end_key: " + hr.end_key);
-      return parseInt(hr.end_key, 16);
+    })
+    .then(hr => {
+      console.info("end_key: " + hr.end_key);
+      return hr.end_key + 1n;
+      /*
+      console.error("start_key: " + hr.start_key);
+      hr.start_key = hr.end_key + 1n;
+      hr.end_key = undefined;
+      return hr;
+      */
+      //return parseInt(hr.start_key, 16);
       //console.error(intVal);
       //intVal += 1
       //console.error(intVal);
       //return intVal;
-    }))
-    .catch(err => callback(null, {
-      console.log(err);
-      //var asdf = {};
-      //return asdf;
-    }));
-  });
+    })
+    .catch(err => {
+      console.error("err: " + err);
+      var asdf = {};
+      asdf.start_key = 1n;
+      return 0n;
+    });
+  //});
 }
 
 /*

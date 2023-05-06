@@ -48,7 +48,21 @@ functions:
     handler: handler.getRange
     events:
       - http:
-          path: getRange
+          path: getRange/{size+}
+          method: get
+          cors: true
+  finishRange:
+    handler: handler.finishRange
+    events:
+      - http:
+          path: finishRange/{id}
+          method: get
+          cors: true
+  foundKey:
+    handler: handler.foundKey
+    events:
+      - http:
+          path: foundKey/{key}
           method: get
           cors: true
 

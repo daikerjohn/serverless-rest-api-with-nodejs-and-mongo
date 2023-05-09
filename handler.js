@@ -117,7 +117,7 @@ module.exports.getRange = async (event, context, callback) => {
         return HashRange.create({
             start_key: next_start,
             end_key: next_end,
-            requested_time: new Date().Now
+            requested_time: Date.now()
           })
           .then(user => {
             return {
@@ -172,14 +172,15 @@ async function findNextStartt() {
     .then(hr => {
       if (hr == null || hr == undefined) {
         console.log("not found");
-        return 0n;
+        hr = {}
+        hr.end_key = 0n;
       }
       console.info("hr" + JSON.stringify(hr));
       return hr;
     })
-    .then(hr => {
-      console.info("end_key: " + hr.end_key);
-      return hr.end_key + 1n;
+    .then(asdf => {
+      //console.info("end_key: " + asdf.end_key);
+      return asdf.end_key + 1n;
       /*
       console.error("start_key: " + hr.start_key);
       hr.start_key = hr.end_key + 1n;

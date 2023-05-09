@@ -11,7 +11,7 @@ const HashRangeSchema = new mongoose.Schema({
   requested_time: {
     type: Date,
     required: true,
-    default: Date.now()
+    default: 0
   },
   completed_time: {
     type: Date,

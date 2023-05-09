@@ -134,7 +134,7 @@ module.exports.getRange = async (event, context, callback) => {
               headers: {
                 'Content-Type': 'text/plain'
               },
-              body: 'Could not fetch the user.'
+              body: 'Could not fetch range'
             };
           });
       });
@@ -223,10 +223,11 @@ module.exports.getRandom = async (event, context, callback) => {
       return findRandomStart(size, attempt).then(next_start => {
         var next_end = next_start + size;
         console.info("next_end : " + next_end);
+        console.info("next_end : " + next_end);
         return HashRange.create({
             start_key: next_start,
             end_key: next_end,
-            requested_time: new Date().Now
+            requested_time: Date().now
           })
           .then(user => {
             return {
@@ -241,7 +242,7 @@ module.exports.getRandom = async (event, context, callback) => {
               headers: {
                 'Content-Type': 'text/plain'
               },
-              body: 'Could not fetch the user.'
+              body: 'Could not fetch random'
             };
           });
       });

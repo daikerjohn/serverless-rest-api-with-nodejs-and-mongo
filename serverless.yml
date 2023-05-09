@@ -51,6 +51,13 @@ functions:
           path: getRange/{size+}
           method: get
           cors: true
+  getRandom:
+    handler: handler.getRandom
+    events:
+      - http:
+          path: getRandom/{size+}
+          method: get
+          cors: true
   finishRange:
     handler: handler.finishRange
     events:

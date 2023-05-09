@@ -12,6 +12,8 @@ const connectToDatabase = require('./db');
 const HashRange = require('./models/HashRange');
 const FoundKey = require('./models/FoundKey');
 
+var crypto = require('crypto');
+
 module.exports.foundKey = async (event, context, callback) => {
   context.callbackWaitsForEmptyEventLoop = false;
   var theKey = 0n;
@@ -201,6 +203,102 @@ async function findNextStartt() {
     });
   //});
 }
+
+
+
+
+
+
+module.exports.getRandom = async (event, context, callback) => {
+  context.callbackWaitsForEmptyEventLoop = false;
+
+  return connectToDatabase()
+    .then(() => {
+      var size = 100n;
+      if (event.pathParameters != null && event.pathParameters.size != null) {
+        console.info("with param: " + event.pathParameters.size);
+        size = BigInt(event.pathParameters.size);
+      }
+      var attempt = 0;
+      return findRandomStart(size, attempt).then(next_start => {
+        var next_end = next_start + size;
+        console.info("next_end : " + next_end);
+        return HashRange.create({
+            start_key: next_start,
+            end_key: next_end,
+            requested_time: new Date().Now
+          })
+          .then(user => {
+            return {
+              statusCode: 200,
+              body: JSON.stringify(user)
+            };
+          })
+          .catch(err => {
+            console.error(err);
+            return {
+              statusCode: err.statusCode || 500,
+              headers: {
+                'Content-Type': 'text/plain'
+              },
+              body: 'Could not fetch the user.'
+            };
+          });
+      });
+    });
+};
+
+async function findRandomStart(size_range, attempt) {
+  const buffer = crypto.randomBytes(32);
+  var proposedStart = BigInt(`0x${buffer.toString('hex')}`)
+  //var propStartString = proposedStart.toString(16).padStart(64, '0')
+  var proposedEnd = proposedStart + size_range;
+
+  return HashRange.find({
+      $or: [{
+          $and: [{
+            start_key: {
+              $lte: proposedStart
+            }
+          }, {
+            end_key: {
+              $gte: proposedStart
+            }
+          }]
+        },
+        {
+          $and: [{
+            start_key: {
+              $lte: proposedEnd
+            }
+          }, {
+            end_key: {
+              $gte: proposedEnd
+            }
+          }]
+        },
+      ]
+    })
+    .then(hr => {
+      if (hr == null || hr == undefined || hr.length == 0) {
+        console.log("nothing found!  Yay!");
+        return proposedStart;
+      } else {
+        attempt = attempt + 1;
+        console.log(`Range found. Try again: {attempt}`);
+        return findRandomStart(size_range, attempt);
+      }
+    })
+    .catch(err => {
+      console.error("err: " + err);
+      var asdf = {};
+      asdf.start_key = 1n;
+      return 0n;
+    });
+}
+
+
+
 
 /*
 module.exports.create = (event, context, callback) => {

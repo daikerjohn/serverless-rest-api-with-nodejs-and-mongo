@@ -65,6 +65,13 @@ functions:
           path: finishRange/{id}
           method: get
           cors: true
+  getUnfinished:
+    handler: handler.getUnfinished
+    events:
+      - http:
+          path: getUnfinished/{size+}
+          method: get
+          cors: true
   foundKey:
     handler: handler.foundKey
     events:

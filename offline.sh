@@ -1,4 +1,4 @@
 #!/bin/bash
 
-sls offline start
+sls offline start --httpPort 8443
 

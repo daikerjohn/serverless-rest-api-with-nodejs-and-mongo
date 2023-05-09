@@ -213,9 +213,6 @@ async function findNextStartt() {
 
 
 
-
-
-
 module.exports.getRandom = async (event, context, callback) => {
   context.callbackWaitsForEmptyEventLoop = false;
 
@@ -234,7 +231,7 @@ module.exports.getRandom = async (event, context, callback) => {
         return HashRange.create({
             start_key: next_start,
             end_key: next_end,
-            requested_time: Date().now
+            requested_time: Date.now()
           })
           .then(user => {
             return {
@@ -256,6 +253,61 @@ module.exports.getRandom = async (event, context, callback) => {
     });
 };
 
+
+module.exports.getUnfinished = async (event, context, callback) => {
+  context.callbackWaitsForEmptyEventLoop = false;
+
+  return connectToDatabase()
+    .then(() => {
+      var size = 5000000n;
+      if (event.pathParameters != null && event.pathParameters.size != null) {
+        console.info("with param: " + event.pathParameters.size);
+        size = BigInt(event.pathParameters.size);
+      }
+      var attempt = 0;
+      var next_start = 0n;
+      var next_end = 0n;
+      return findUnfinished().then(any_unfinished => {
+        if (any_unfinished == null) {
+          return findRandomStart(size, attempt).then(strt => {
+            next_start = strt;
+            next_end = next_start + size;
+            return createAndReturnRange(next_start, next_end);
+          });
+        } else {
+          return {
+            statusCode: 200,
+            body: JSON.stringify(any_unfinished)
+          };
+        }
+      });
+    });
+};
+
+
+function createAndReturnRange(strt, end) {
+  return HashRange.create({
+    start_key: strt,
+    end_key: end,
+    requested_time: Date.now()
+  })
+  .then(hr_obj => {
+    return {
+      statusCode: 200,
+      body: JSON.stringify(hr_obj)
+    };
+  })
+  .catch(err => {
+    console.error(err);
+    return {
+      statusCode: err.statusCode || 500,
+      headers: {
+        'Content-Type': 'text/plain'
+      },
+      body: 'Could not fetch createAndReturnRange'
+    };
+  });
+}
 
 /** Generates BigInts between low (inclusive) and high (exclusive) */
 function generateRandomBigInt() {
@@ -337,6 +389,49 @@ async function findRandomStart(size_range, attempt) {
       var asdf = {};
       asdf.start_key = 1n;
       return 0n;
+    });
+}
+
+async function findUnfinished() {
+
+  //const buffer = crypto.randomBytes(32);
+  //var proposedStart = BigInt(`0x${buffer.toString('hex')}`)
+  //var biggestKey = BigInt('0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff')
+  //if(proposedStart > biggestKey) {
+  //  console.log("Houston, we have a problem!");
+  //}
+  //var proposedStart = generateRandomBigInt()
+  //var propStartString = proposedStart.toString(16).padStart(64, '0')
+  //var proposedEnd = proposedStart + size_range;
+
+  const hoursAgo = new Date();
+  hoursAgo.setHours(hoursAgo.getHours() - 4);
+  return HashRange.findOne({
+      $and: [{
+        completed_time: {
+          $eq: new Date(0)
+        }
+      }, {
+        requested_time: {
+          $lte: hoursAgo
+        }
+      }]
+    })
+    .setOptions({
+      useBigInt64: true
+    })
+    .then(hr => {
+      if (hr == null || hr == undefined || hr.length == 0) {
+        console.log("nothing found!  Yay!");
+        return null;
+      }
+      return hr;
+    })
+    .catch(err => {
+      console.error("err: " + err);
+      //var asdf = {};
+      //asdf.start_key = 1n;
+      return null;
     });
 }
 

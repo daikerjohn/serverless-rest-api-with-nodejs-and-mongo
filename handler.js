@@ -156,16 +156,23 @@ async function finishOne(id) {
 
 async function findNextStartt() {
   let filter = {
-    completed_time: {
-      $gte: new Date(0)
-    }
+    $and: [{
+      completed_time: {
+        $gte: new Date(0)
+      }
+    }, {
+      end_key: {
+        $ne: undefined
+      }
+    }]
   };
   let fields = null;
   //let filter = { completed_time: { $neq: 0 } };
   let options = {
     sort: {
       end_key: -1
-    }
+    },
+    useBigInt64: true
   };
   //return connectToDatabase()
   //.then(() => {
@@ -249,9 +256,41 @@ module.exports.getRandom = async (event, context, callback) => {
     });
 };
 
+
+/** Generates BigInts between low (inclusive) and high (exclusive) */
+function generateRandomBigInt() {
+  var lowBigInt = 0n;
+  var highBigInt = BigInt('0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff');
+  //if (lowBigInt >= highBigInt) {
+  //  throw new Error('lowBigInt must be smaller than highBigInt');
+  //}
+
+  const difference = highBigInt - lowBigInt;
+  const differenceLength = difference.toString().length;
+  let multiplier = '';
+  while (multiplier.length < differenceLength) {
+    multiplier += Math.random()
+      .toString()
+      .split('.')[1];
+  }
+  multiplier = multiplier.slice(0, differenceLength);
+  const divisor = '1' + '0'.repeat(differenceLength);
+
+  const randomDifference = (difference * BigInt(multiplier)) / BigInt(divisor);
+
+  return lowBigInt + randomDifference;
+}
+
+
 async function findRandomStart(size_range, attempt) {
+
   const buffer = crypto.randomBytes(32);
   var proposedStart = BigInt(`0x${buffer.toString('hex')}`)
+  //var biggestKey = BigInt('0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff')
+  //if(proposedStart > biggestKey) {
+  //  console.log("Houston, we have a problem!");
+  //}
+  //var proposedStart = generateRandomBigInt()
   //var propStartString = proposedStart.toString(16).padStart(64, '0')
   var proposedEnd = proposedStart + size_range;
 
@@ -279,6 +318,9 @@ async function findRandomStart(size_range, attempt) {
           }]
         },
       ]
+    })
+    .setOptions({
+      useBigInt64: true
     })
     .then(hr => {
       if (hr == null || hr == undefined || hr.length == 0) {

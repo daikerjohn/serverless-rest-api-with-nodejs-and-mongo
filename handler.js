@@ -376,7 +376,7 @@ async function findRandomStart(size_range, attempt) {
     })
     .then(hr => {
       if (hr == null || hr == undefined || hr.length == 0) {
-        console.log("nothing found!  Yay!");
+        console.log(`Overlap not found: {proposedStart}`);
         return proposedStart;
       } else {
         attempt = attempt + 1;
@@ -422,7 +422,7 @@ async function findUnfinished() {
     })
     .then(hr => {
       if (hr == null || hr == undefined || hr.length == 0) {
-        console.log("nothing found!  Yay!");
+        console.log("Nothing unfinished!");
         return null;
       }
       return hr;

@@ -227,7 +227,6 @@ module.exports.getRandom = async (event, context, callback) => {
       return findRandomStart(size, attempt).then(next_start => {
         var next_end = next_start + size;
         console.info("next_end : " + next_end);
-        console.info("next_end : " + next_end);
         return HashRange.create({
             start_key: next_start,
             end_key: next_end,
@@ -268,13 +267,15 @@ module.exports.getUnfinished = async (event, context, callback) => {
       var next_start = 0n;
       var next_end = 0n;
       return findUnfinished().then(any_unfinished => {
-        if (any_unfinished == null) {
+        if (any_unfinished == null || any_unfinished.start_key < 0n) {
+          console.info("unfinshed: " + any_unfinished)
           return findRandomStart(size, attempt).then(strt => {
             next_start = strt;
             next_end = next_start + size;
             return createAndReturnRange(next_start, next_end);
           });
         } else {
+          //console.info("unfinshedJS: " + JSON.stringify(any_unfinished))
           return {
             statusCode: 200,
             body: JSON.stringify(any_unfinished)
@@ -335,9 +336,14 @@ function generateRandomBigInt() {
 
 
 async function findRandomStart(size_range, attempt) {
-
-  const buffer = crypto.randomBytes(32);
+  var biggestKey = BigInt('0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff')
+  var buffer = crypto.randomBytes(32);
   var proposedStart = BigInt(`0x${buffer.toString('hex')}`)
+  while (proposedStart < 0n || proposedStart > biggestKey) {
+      console.log("Negative start!");
+      buffer = crypto.randomBytes(32);
+      proposedStart = BigInt(`0x${buffer.toString('hex')}`)
+  }
   //var biggestKey = BigInt('0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff')
   //if(proposedStart > biggestKey) {
   //  console.log("Houston, we have a problem!");
@@ -376,11 +382,11 @@ async function findRandomStart(size_range, attempt) {
     })
     .then(hr => {
       if (hr == null || hr == undefined || hr.length == 0) {
-        console.log(`Overlap not found: {proposedStart}`);
+        console.log(`Overlap not found: ${proposedStart}`);
         return proposedStart;
       } else {
         attempt = attempt + 1;
-        console.log(`Range found. Try again: {attempt}`);
+        console.log(`Range found. Try again: ${attempt}`);
         return findRandomStart(size_range, attempt);
       }
     })

@@ -44,20 +44,21 @@ functions:
          path: users/{id} 
          method: delete
          cors: true
-  getRange:
-    handler: handler.getRange
-    events:
-      - http:
-          path: getRange/{size+}
-          method: get
-          cors: true
-  getRandom:
-    handler: handler.getRandom
-    events:
-      - http:
-          path: getRandom/{size+}
-          method: get
-          cors: true
+  #getRange:
+  #  handler: handler.getRange
+  #  events:
+  #    - http:
+  #        path: getRange/{size+}
+  #        method: get
+  #        cors: true
+  #getRandom:
+  #  handler: handler.getRandom
+  #  events:
+  #    - http:
+  #        path: getRandom/{size+}
+  #        method: get
+  #        cors: true
+  # Deprecated!
   finishRange:
     handler: handler.finishRange
     events:
@@ -78,6 +79,13 @@ functions:
       - http:
           path: foundKey/{key}
           method: get
+          cors: true
+  finishRangeNew:
+    handler: handler.finishRangeNew
+    events:
+      - http:
+          path: finishRangeNew
+          method: post
           cors: true
 
 plugins:

@@ -85,7 +85,7 @@ var chart = new Chart(ctx,
               chart.options.showLines = true;
             }
             console.log(chart.options.showLines);
-            console.log($.map(response, function(val, key) { return Math.floor(new Date(val['timestamp']).getTime() / 1000); } ));
+            //console.log($.map(response, function(val, key) { return Math.floor(new Date(val['timestamp']).getTime() / 1000); } ));
             //chart.data.labels = $.map(response, function(val, key) { return Math.floor(new Date(val['timestamp']).getTime() / 1000); } );
             
             chart.data.datasets[0].label = "Battery SOC";

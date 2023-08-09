@@ -20,14 +20,14 @@
             handler: handler.getOne
             events:
               - http:
-                  path: solar/{id} 
+                  path: solarone/{id} 
                   method: get
                   cors: true
           getAll:
             handler: handler.getAll 
             events:
              - http:
-                 path: solar
+                 path: solar/{hours?}
                  method: get
                  cors: true
           update:
@@ -43,6 +43,13 @@
              - http:
                  path: solar/{id} 
                  method: delete
+                 cors: true
+          hello:
+            handler: handler.hello
+            events:
+             - http:
+                 path: hello/{hours?}
+                 method: get
                  cors: true
           createTemp:
             handler: handler.createTemp # point to exported create function in handler.js

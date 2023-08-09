@@ -5,18 +5,28 @@ const connectToDatabase = require('./db');
 const SolarPoint = require('./models/SolarPoint');
 const TempPoint = require('./models/TempPoint');
 
-module.exports.hello = async (event) => {
-  return {
-    statusCode: 200,
-    body: JSON.stringify(
-      {
-        message: 'Go Serverless v1.0! Your function executed successfully!',
-        input: event,
+const fs = require('fs');
+
+module.exports.hello = (event, context, callback) => {
+  let hours = 14;
+  if (event?.queryStringParameters && event?.queryStringParameters.hours) {
+    hours = event.queryStringParameters.hours;
+  }
+
+  fs.readFile('./index.html', 'utf8', (err, data) => {
+    if (err) {
+      console.log(err);
+    }
+    data = data.replace('<option>' + hours + '</option>', '<option selected="asdf">' + hours + '</option>');
+    //console.log(data);
+    callback(null, {
+      statusCode: 200,
+      headers: {
+        "Content-Type": "text/html",
       },
-      null,
-      2
-    ),
-  };
+      body: data,
+    });
+  });
 
   // Use this code if you don't use the http event with the LAMBDA-PROXY integration
   // return { message: 'Go Serverless v1.0! Your function executed successfully!', event };
@@ -64,19 +74,30 @@ module.exports.getOne = (event, context, callback) => {
  
 module.exports.getAll = (event, context, callback) => {
   context.callbackWaitsForEmptyEventLoop = false;
- 
+
+  let hours = 12;
+  if (event?.queryStringParameters && event?.queryStringParameters.hours) {
+    hours = event.queryStringParameters.hours;
+  }
+  //console.log(hours);
+
   connectToDatabase()
     .then(() => {
-      SolarPoint.find()
+      var cutoff = new Date();
+      cutoff.setHours(cutoff.getHours()-hours);
+      SolarPoint.find({ $and: [{ timestamp: { $gte: cutoff } }, { battery_soc: { $ne: 0 } }] } ).sort( { timestamp: 1 } )
         .then(users => callback(null, {
           statusCode: 200,
           body: JSON.stringify(users)
         }))
-        .catch(err => callback(null, {
-          statusCode: err.statusCode || 500,
-          headers: { 'Content-Type': 'text/plain' },
-          body: 'Could not fetch the user.'
-        }))
+        .catch(err => {
+          console.log(err);
+          callback(null, {
+            statusCode: err.statusCode || 500,
+            headers: { 'Content-Type': 'text/plain' },
+            body: 'Could not fetch the user.'
+          })
+        })
     });
 };
  

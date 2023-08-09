@@ -1,0 +1,142 @@
+<html>
+  <head>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.7.0/dist/jquery.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/moment@^2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-moment@^1"></script>
+  </head>
+  <style>
+    h1 { color: #73757d; }
+  </style>
+  <body>
+
+<select id="hours">
+  <option>1</option>
+  <option>2</option>
+  <option>7</option>
+  <option>14</option>
+  <option>26</option>
+  <option>36</option>
+  <option>48</option>
+  <option>96</option>
+  <option>168</option>
+</select>
+
+    <table>
+    <canvas id="canvas01"></canvas>
+    </table>
+    <script>    
+var charts = []
+
+var ctx = document.getElementById("canvas01").getContext("2d");
+var chart = new Chart(ctx,
+{
+"type": "line",
+"data":{
+  //"labels":["Orionure US","Dirker US","Orionure SG","ðŸ”¥ MySrvCloud ðŸ”¥","CH4K1Pu Node","MySrvCloud VA","RabidMining Pool","Gustavogerman AR","Yashnik EU"],
+  "datasets":[
+    {"label":"Blocks","data":[],"backgroundColor":"#36a2eb"},
+    {"label":"Miniblocks","data":[],"backgroundColor":"#ff6384"},
+    {"label":"Rejects","data":[],"backgroundColor":"#ff9f40"},
+    {"label":"Orphans","data":[],"backgroundColor":"#ffcd56"},
+    {"label":"Hashrate","data":[],"backgroundColor":"#ff00ff"},
+    {"label":"Orphans","data":[],"backgroundColor":"#0000ff"},
+    {"label":"Orphans","data":[],"backgroundColor":"#ff00ff"},
+  ]},
+  "options":{
+    "elements": {
+      "point": {
+        "pointRadius": 2
+      }
+    },
+    "responsive":true,
+    "plugins":{"title":{"display":true,"text":"Node Results"}},
+    "showLines": false,
+    "scales": {
+      "x": {
+        "type": "time",
+        "time": {
+          //"parser": "YYYY-MM-DD\THH:mm:ss.SSS\Z"
+          //"parser": "X",
+          "unit": "hour",
+          "displayFormats": {
+            "hour": "DD-HH:mm"
+          },
+          //"tooltipFormat": "DD-HH:mm",
+          "title": {
+            "display": true,
+            "text": 'Date'
+          }
+        }
+      }
+    },
+  }
+});
+
+    //ajax_chart(myChart, json_url);
+
+    // function to update our chart
+    function ajax_chart() {
+        var data = {};
+        var hours = $( "#hours" ).val();
+        console.log(hours);
+        $.getJSON("/dev/solar?hours=" + hours, data).done(function(response) {
+            if(hours == "1") {
+              chart.options.showLines = true;
+            }
+            console.log(chart.options.showLines);
+            console.log($.map(response, function(val, key) { return Math.floor(new Date(val['timestamp']).getTime() / 1000); } ));
+            //chart.data.labels = $.map(response, function(val, key) { return Math.floor(new Date(val['timestamp']).getTime() / 1000); } );
+            
+            chart.data.datasets[0].label = "Battery SOC";
+            //chart.data.datasets[0].data = $.map(response, function(val, key) { return {x: Math.floor(new Date(val['timestamp']).getTime() / 1000), y: val['battery_soc'] }; } )
+            chart.data.datasets[0].data = $.map(response, function(val, key) { return {x: val['timestamp'], y: val['battery_soc'] }; } )
+
+            chart.data.datasets[1].label = "Battery Voltage";
+            //chart.data.datasets[1].data = $.map(response, function(val, key) { return {x: Math.floor(new Date(val['timestamp']).getTime() / 1000), y: val['battery_voltage'] }; } )
+            chart.data.datasets[1].data = $.map(response, function(val, key) { return {x: val['timestamp'], y: val['battery_voltage'] }; } )
+
+            chart.data.datasets[2].label = "Net System Amps";
+            //chart.data.datasets[2].data = $.map(response, function(val, key) { return {x: Math.floor(new Date(val['timestamp']).getTime() / 1000), y: val['battery_charging_amps'] }; } )
+            chart.data.datasets[2].data = $.map(response, function(val, key) { return {x: val['timestamp'], y: val['battery_charging_amps'] }; } )
+
+            chart.data.datasets[3].label = "Battery Temp";
+            chart.data.datasets[3].data = $.map(response, function(val, key) { return {x: val['timestamp'], y: val['battery_temperature'] }; } )
+
+            chart.data.datasets[4].label = "Hashrate";
+            chart.data.datasets[4].data = $.map(response, function(val, key) { return {x: val['timestamp'], y: val['latest_hashrate'] }; } )
+
+            chart.data.datasets[5].label = "Charging Amps";
+            chart.data.datasets[5].data = $.map(response, function(val, key) { return {x: val['timestamp'], y: val['solar_charging_amps'] }; } )
+
+
+
+            chart.update(); // finally update our chart
+        });
+    }
+    ajax_chart();
+
+charts.push(chart);
+$( "#hours" ).on( "change", ajax_chart );
+
+/*
+var ctx = document.getElementById("canvas02").getContext("2d");
+var chart = new Chart(ctx, {"type":"pie","data":{"labels":["Orionure US","Dirker US","Orionure SG","ðŸ”¥ MySrvCloud ðŸ”¥","CH4K1Pu Node","MySrvCloud VA","RabidMining Pool","Gustavogerman AR","Yashnik EU"],"datasets":[{"data":[2525875,1968373,6025416,8606491,4761302,3398748,7356259,321998,11218281]}]},"options":{"responsive":true,"plugins":{"title":{"display":true,"text":"Node Hashrate"},"legend":{"display":true,"position":"top"}}}});
+charts.push(chart)
+var ctx = document.getElementById("canvas03").getContext("2d");
+var chart = new Chart(ctx, {"type":"doughnut","data":{"labels":["Orionure US","Dirker US","Orionure SG","ðŸ”¥ MySrvCloud ðŸ”¥","CH4K1Pu Node","MySrvCloud VA","RabidMining Pool","Gustavogerman AR","Yashnik EU"],"datasets":[{"data":[1375,1214,2687,2625,2149,3711,4580,202,8177]}]},"options":{"responsive":true,"plugins":{"title":{"display":true,"text":"Workers"},"legend":{"display":true,"position":"top"}}}});
+charts.push(chart)
+var ctx = document.getElementById("canvas04").getContext("2d");
+var chart = new Chart(ctx, {"type":"pie","data":{"labels":["...tgc858","...70cfxz","...23egk9","...tfwqyc","...7q825t","...4x9dna","...s0gp7q","...hpy270","...v644m9","...z568vv","...f3fdwh","...gzu5ar","...2tsde9","...ny8270","...68j0qj","...28l22l","...aczty4","...pm2nkv","...efekkx","...zu28q8","...p6m3ty","...7wmwe4","...n5jv0y","...ffna05","...ns7qas","...7eytpa","...q3kzmw","...sqt4kr","...vacekr","...m3avr3","...a9fvyj","...u96ww2","...hxzeel","...knzx5l","...aj6a3l","...78ce6k","...rafctl","...vs27yx","...js4uez","...yvs0p0","...cxexme","...atw93t","...4ta2ug","...mfkjyu","...c90gn6","...4hy8eh","...6c6295","...wuas5n","...hsg6ty","...hp78zm"],"datasets":[{"data":[16.308333333333334,15.543750000000001,13.425,3.7145833333333336,3.7083333333333335,3.6833333333333336,2.8541666666666665,2.75,2.4916666666666667,2.247916666666667,1.9520833333333334,1.9083333333333334,1.8770833333333334,1.8312499999999998,1.7229166666666667,1.5583333333333333,1.4354166666666666,1.35,1.1291666666666667,1.0270833333333333,0.9562499999999999,0.933333333335,0.8770833333333333,0.8187500000000001,0.8083333333333333,0.7833333333333333,0.7125,0.6583333333333333,0.5479166666666667,0.47916666666666663,0.4333333333333333,0.4166666666666667,0.41250000000000003,0.3875,0.3875,0.30625,0.3,0.29791666666666666,0.2791666666666667,0.24791666666666667,0.23958333333333331,0.22916666666666666,0.22499999999999998,0.19791666666666669,0.1875,0.17916666666666667,0.15416666666666667,0.14166666666666666,0.13125,0.12916666666666665]}]},"options":{"responsive":true,"plugins":{"title":{"display":true,"text":"Top50 Miners (last 4,800 blocks)"},"legend":{"display":false,"position":"top"}}}});
+charts.push(chart)
+var ctx = document.getElementById("canvas05").getContext("2d");
+var chart = new Chart(ctx, {"type":"pie","data":{"labels":["Blocks","Minis","Blocks","Minis","Blocks","Minis","Blocks","Minis","Blocks","Minis","Blocks","Minis","Blocks","Minis","Blocks","Minis","Blocks","Minis","Blocks","Minis"],"datasets":[{"label":"...tgc858","data":[0,7828],"backgroundColor":["#36a2ebb0","#36a2eb"]},{"label":"...70cfxz","data":[756,6705],"backgroundColor":["#ff6384b0","#ff6384"]},{"label":"...23egk9","data":[768,5676],"backgroundColor":["#ff9f40b0","#ff9f40"]},{"label":"...tfwqyc","data":[181,1602],"backgroundColor":["#ffcd56b0","#ffcd56"]},{"label":"...7q825t","data":[180,1600],"backgroundColor":["#4bc0c0b0","#4bc0c0"]},{"label":"...4x9dna","data":[194,1574],"backgroundColor":["#9966ffb0","#9966ff"]},{"label":"...s0gp7q","data":[148,1222],"backgroundColor":["#c9cbcfb0","#c9cbcf"]},{"label":"...hpy270","data":[0,1320],"backgroundColor":["#36a2ebb0","#36a2eb"]},{"label":"...v644m9","data":[137,1059],"backgroundColor":["#ff6384b0","#ff6384"]},{"label":"...z568vv","data":[109,970],"backgroundColor":["#ff9f40b0","#ff9f40"]}]},"options":{"responsive":true,"plugins":{"title":{"display":true,"text":"Top10 Miners Block Distribution"},"legend":{"display":false,"position":"top"}}}});
+charts.push(chart)
+var ctx = document.getElementById("canvas06").getContext("2d");
+var chart = new Chart(ctx, {"type":"pie","data":{"labels":["Belarus","Singapore","Cuba","Russia","Mongolia","Taiwan","United Arab Emirates","Azerbaijan","Nicaragua","Germany","Brazil","Peru","Netherlands","Luxembourg","South Korea","Malaysia","Portugal","Paraguay","Estonia","Bulgaria","Japan","Qatar","Czechia","Denmark","Austria","Ecuador","Argentina","Israel","Croatia","Slovenia","Egypt","Canada","Turkey","Switzerland","Ireland","Iraq","Italy","Bolivia","Uruguay","Latvia","Norway","Australia","United Kingdom","Mauritania","Uzbekistan","Saudi Arabia","Nigeria","Panama","Belgium","Finland","Serbia","Malta","Honduras","Spain","Moldova","Poland","Morocco","Colombia","Indonesia","Dominican Republic","Guadeloupe","Hungary","Bosnia and Herzegovina","Vietnam","Mexico","Chile","Greece","New Zealand","United States","India","France","Slovakia","Venezuela","El Salvador","Puerto Rico","Guatemala","Costa Rica","Romania","Ukraine","Angola","Sweden","China","Hong Kong","Jamaica","Iran","South Africa","Kazakhstan"],"datasets":[{"data":[20,4,1,2524,1,8,11,2,1,152,71,140,53,1,149,2,30,10,1,8,10,34,19,2,6,27,178,4,6,6,6,176,12,51,8,1,73,16,7,3,43,3,12,1,13,1,1,4,22,14,4,40,7,199,6,120,2,78,2,18,2,4,5,56,188,34,12,5,638,9,376,1,25,10,1,5,5,17,236,1,235,193,6,2,2,18,33]}]},"options":{"responsive":true,"plugins":{"title":{"display":true,"text":"Worker Origin"},"legend":{"display":false,"position":"top"}}}});
+charts.push(chart)
+*/
+    </script>
+
+  </body>
+</html>

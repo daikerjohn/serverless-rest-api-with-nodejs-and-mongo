@@ -269,6 +269,9 @@ module.exports.getUnfinished = async (event, context, callback) => {
       if (event.pathParameters != null && event.pathParameters.size != null) {
         console.info("with param: " + event.pathParameters.size);
         size = BigInt(event.pathParameters.size);
+        if (size > 100000000n) {
+          size = 100000000n;
+        }
       }
       var attempt = 0;
       var next_start = 0n;

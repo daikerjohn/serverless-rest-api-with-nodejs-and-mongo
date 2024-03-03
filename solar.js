@@ -36,13 +36,16 @@ app.get("/dev/hello", (req, resp) => {
   if (req?.query && req?.query.hours) {
     hours = req.query.hours;
   }
-  //console.log("Hello: " + hours + " - " + new Date().toISOString());
+  console.log("Hello: " + hours + " - " + new Date().toISOString());
 
   fs.readFile('./index.html', 'utf8', (err, data) => {
     if (err) {
       console.log(err);
     }
-    data = data.replace('<option>' + hours + '</option>', '<option selected="asdf">' + hours + '</option>');
+    //data = data.replace('<option value="' + hours + '">' + hours + '</option>', '<option selected="asdf">' + hours + '</option>');
+    //data = data.replace(`value="{hours}"`, `value="{hours} selected="yes"`);
+    data = data.replace(`value="${hours}"`, `value="${hours}" selected="yes"`);
+    //console.log(data);
     resp.send(data);
     /*
     //console.log(data);
@@ -172,6 +175,83 @@ app.get("/dev/solar", (req, resp) => {
      "Status": "Running"
   };
   
+  //response.send(status);
+});
+
+app.get("/dev/solar_agg", (req, resp) => {
+  let hours = 14;
+  if (req?.query && req?.query.hours) {
+    hours = req.query.hours;
+  }
+  console.log("Hours: " + hours + " - " + new Date().toISOString());
+
+  connectToDatabase()
+    .then(() => {
+      var cutoff = new Date();
+      cutoff.setHours(cutoff.getHours()-hours);
+      SolarPoint
+         //.find({ $and: [{ timestamp: { $gte: cutoff } }, { battery_soc: { $ne: 0 } }] } ).sort( { timestamp: 1 } )
+         .aggregate(
+          [
+            {
+              $project: {
+                timestamp: 1,
+                battery_soc: 1,
+                battery_voltage: 1,
+                battery_charging_amps: 1,
+                battery_temperature: 1,
+                latest_hashrate: 1,
+                solar_charging_amps: 1,
+                solar_panel_watts: 1,
+                solar_panel_voltage: 1,
+                asdf: { $dateTrunc: { date: "$timestamp", unit: "hour" } },
+              }
+            },
+            { $match : { $and: [{ timestamp: { $gte: cutoff } }, { battery_soc: { $ne: 0 } }] } },
+            { $group:
+                {
+                    _id: { $dateToString: { format: "%Y-%m-%d-%H", date: "$asdf",timezone: "America/Los_Angeles" } },
+                    battery_soc: { $avg : "$battery_soc" },
+                    battery_voltage: { $avg : "$battery_voltage" },
+                    battery_charging_amps: { $avg : "$battery_charging_amps" },
+                    battery_temperature: { $avg : "$battery_temperature" },
+                    latest_hashrate: { $avg : "$latest_hashrate" },
+                    solar_charging_amps: { $avg : "$solar_charging_amps" },
+                    solar_panel_watts: { $avg : "$solar_panel_watts" },
+                    solar_panel_voltage: { $avg : "$solar_panel_voltage" },
+                    timestamp: { $first: "$asdf" },
+                }
+            },
+            { $sort : { "_id" : 1 } },
+            { $limit: 200 }
+          ]
+        )
+        .then(users =>
+          resp.send(JSON.stringify(users))
+          /*
+          callback(null, {
+            statusCode: 200,
+            body: JSON.stringify(users)
+          })
+          */
+        )
+        .catch(err => {
+          console.log(err);
+          resp.status(500).send('Could not fetch Solar data');
+          /*
+          callback(null, {
+            statusCode: err.statusCode || 500,
+            headers: { 'Content-Type': 'text/plain' },
+            body: 'Could not fetch the user.'
+          })
+          */
+        })
+    });
+
+  const status = {
+     "Status": "Running"
+  };
+
   //response.send(status);
 });
 

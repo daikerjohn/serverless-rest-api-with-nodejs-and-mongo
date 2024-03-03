@@ -11,15 +11,20 @@
   <body>
 
 <select id="hours">
-  <option>1</option>
-  <option>2</option>
-  <option>7</option>
-  <option>14</option>
-  <option>26</option>
-  <option>36</option>
-  <option>48</option>
-  <option>96</option>
-  <option>168</option>
+  <option value="1">1 hour</option>
+  <option value="2">2 hours</option>
+  <option value="7">7 hours</option>
+  <option value="14">14 hours</option>
+  <option value="26">26 hours</option>
+  <option value="36">36 hours</option>
+  <option value="48">2 days</option>
+  <option value="96">4 days</option>
+  <option value="168">7 days</option>
+  <option value="240">10 days</option>
+  <option value="336">2 weeks</option>
+  <option value="504">3 weeks</option>
+  <option value="672">4 weeks</option>
+  <option value="1008">6 weeks</option>
 </select>
 
     <table>
@@ -41,7 +46,8 @@ var chart = new Chart(ctx,
     {"label":"Orphans","data":[],"backgroundColor":"#ffcd56"},
     {"label":"Hashrate","data":[],"backgroundColor":"#ff00ff"},
     {"label":"Orphans","data":[],"backgroundColor":"#0000ff"},
-    {"label":"Orphans","data":[],"backgroundColor":"#ff00ff"},
+    {"label":"Panel Watts","data":[],"backgroundColor":"#00ff00"},
+    {"label":"Panel Volts","data":[],"backgroundColor":"#090090"},
   ]},
   "options":{
     "elements": {
@@ -80,10 +86,16 @@ var chart = new Chart(ctx,
         var data = {};
         var hours = $( "#hours" ).val();
         console.log(hours);
-        $.getJSON("/dev/solar?hours=" + hours, data).done(function(response) {
-            if(hours == "1") {
-              chart.options.showLines = true;
-            }
+        var url = "/dev/solar?hours=" + hours;
+        if(hours > 27) {
+          url = "/dev/solar_agg?hours=" + hours
+        } else {
+          chart.options.showLines = true;
+        }
+        $.getJSON(url, data).done(function(response) {
+            //if(hours == "1") {
+            //  chart.options.showLines = true;
+            //}
             console.log(chart.options.showLines);
             //console.log($.map(response, function(val, key) { return Math.floor(new Date(val['timestamp']).getTime() / 1000); } ));
             //chart.data.labels = $.map(response, function(val, key) { return Math.floor(new Date(val['timestamp']).getTime() / 1000); } );
@@ -106,10 +118,14 @@ var chart = new Chart(ctx,
             chart.data.datasets[4].label = "Hashrate";
             chart.data.datasets[4].data = $.map(response, function(val, key) { return {x: val['timestamp'], y: val['latest_hashrate'] }; } )
 
-            chart.data.datasets[5].label = "Charging Amps";
+            chart.data.datasets[5].label = "Solar Charging Amps";
             chart.data.datasets[5].data = $.map(response, function(val, key) { return {x: val['timestamp'], y: val['solar_charging_amps'] }; } )
 
+            chart.data.datasets[6].label = "Panel Watts";
+            chart.data.datasets[6].data = $.map(response, function(val, key) { return {x: val['timestamp'], y: val['solar_panel_watts'] }; } )
 
+            chart.data.datasets[7].label = "Panel Volts";
+            chart.data.datasets[7].data = $.map(response, function(val, key) { return {x: val['timestamp'], y: val['solar_panel_voltage'] }; } )
 
             chart.update(); // finally update our chart
         });
@@ -118,6 +134,7 @@ var chart = new Chart(ctx,
 
 charts.push(chart);
 $( "#hours" ).on( "change", ajax_chart );
+//$( "#hours" ).change();
 
 /*
 var ctx = document.getElementById("canvas02").getContext("2d");

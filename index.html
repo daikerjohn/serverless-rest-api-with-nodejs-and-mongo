@@ -45,10 +45,13 @@ var chart = new Chart(ctx,
     {"label":"Miniblocks","data":[],"backgroundColor":"#ff6384"},
     {"label":"Rejects","data":[],"backgroundColor":"#ff9f40"},
     {"label":"Orphans","data":[],"backgroundColor":"#ffcd56"},
-    {"label":"Hashrate","data":[],"backgroundColor":"#ff00ff"},
     {"label":"Orphans","data":[],"backgroundColor":"#0000ff"},
-    {"label":"Panel Watts","data":[],"backgroundColor":"#00ff00"},
+    {"label":"Panel Watts","data":[],"backgroundColor":"#ff0000"},
     {"label":"Panel Volts","data":[],"backgroundColor":"#090090"},
+    {"label":"Hashrate 0","data":[],"backgroundColor":"#00ff00"},
+    {"label":"Hashrate 1","data":[],"backgroundColor":"#009900"},
+    //{"label":"Hashrate 2","data":[],"backgroundColor":"#004d00"},
+    //{"label":"Hashrate 3","data":[],"backgroundColor":"#000000"},
   ]},
   "options":{
     "elements": {
@@ -125,17 +128,23 @@ if ('URLSearchParams' in window) {
             chart.data.datasets[3].label = "Battery Temp";
             chart.data.datasets[3].data = $.map(response, function(val, key) { return {x: val['timestamp'], y: val['battery_temperature'] }; } )
 
-            chart.data.datasets[4].label = "Hashrate";
-            chart.data.datasets[4].data = $.map(response, function(val, key) { return {x: val['timestamp'], y: val['latest_hashrate'] }; } )
+            chart.data.datasets[4].label = "Solar Charging Amps";
+            chart.data.datasets[4].data = $.map(response, function(val, key) { return {x: val['timestamp'], y: val['solar_charging_amps'] }; } )
 
-            chart.data.datasets[5].label = "Solar Charging Amps";
-            chart.data.datasets[5].data = $.map(response, function(val, key) { return {x: val['timestamp'], y: val['solar_charging_amps'] }; } )
+            chart.data.datasets[5].label = "Panel Watts";
+            chart.data.datasets[5].data = $.map(response, function(val, key) { return {x: val['timestamp'], y: val['solar_panel_watts'] }; } )
 
-            chart.data.datasets[6].label = "Panel Watts";
-            chart.data.datasets[6].data = $.map(response, function(val, key) { return {x: val['timestamp'], y: val['solar_panel_watts'] }; } )
+            chart.data.datasets[6].label = "Panel Volts";
+            chart.data.datasets[6].data = $.map(response, function(val, key) { return {x: val['timestamp'], y: val['solar_panel_voltage'] }; } )
 
-            chart.data.datasets[7].label = "Panel Volts";
-            chart.data.datasets[7].data = $.map(response, function(val, key) { return {x: val['timestamp'], y: val['solar_panel_voltage'] }; } )
+            chart.data.datasets[7].label = "Hashrate 0";
+            chart.data.datasets[7].data = $.map(response, function(val, key) { return {x: val['timestamp'], y: val['latest_hashrate'] }; } )
+            chart.data.datasets[8].label = "Hashrate 1";
+            chart.data.datasets[8].data = $.map(response, function(val, key) { return {x: val['timestamp'], y: val['latest_hashrate_1'] }; } )
+            //chart.data.datasets[9].label = "Hashrate 2";
+            //chart.data.datasets[9].data = $.map(response, function(val, key) { return {x: val['timestamp'], y: val['latest_hashrate_2'] }; } )
+            //chart.data.datasets[10].label = "Hashrate 3";
+            //chart.data.datasets[10].data = $.map(response, function(val, key) { return {x: val['timestamp'], y: val['latest_hashrate_3'] }; } )
 
             chart.update(); // finally update our chart
         });

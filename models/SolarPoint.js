@@ -51,6 +51,9 @@ const SolarPointSchema = new mongoose.Schema({
 
   // From Astrominer
   latest_hashrate: { type: Number },
+  latest_hashrate_1: { type: Number },
+  latest_hashrate_2: { type: Number },
+  latest_hashrate_3: { type: Number },
   
 });
 module.exports = mongoose.model('SolarPoint', SolarPointSchema);

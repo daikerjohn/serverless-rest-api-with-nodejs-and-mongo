@@ -45,6 +45,7 @@ app.get("/dev/hello", (req, resp) => {
     //data = data.replace('<option value="' + hours + '">' + hours + '</option>', '<option selected="asdf">' + hours + '</option>');
     //data = data.replace(`value="{hours}"`, `value="{hours} selected="yes"`);
     data = data.replace(`value="${hours}"`, `value="${hours}" selected="yes"`);
+    data = data.replace(`value="REPLACEME"`, `value="${hours}" selected="yes"`);
     //console.log(data);
     resp.send(data);
     /*
@@ -183,6 +184,13 @@ app.get("/dev/solar_agg", (req, resp) => {
   if (req?.query && req?.query.hours) {
     hours = req.query.hours;
   }
+  let groupSize = 5;
+  if (hours > 95) {
+    groupSize = 10;
+  }
+  if (hours > 169) {
+    groupSize = 30;
+  }
   console.log("Hours: " + hours + " - " + new Date().toISOString());
 
   connectToDatabase()
@@ -204,13 +212,13 @@ app.get("/dev/solar_agg", (req, resp) => {
                 solar_charging_amps: 1,
                 solar_panel_watts: 1,
                 solar_panel_voltage: 1,
-                asdf: { $dateTrunc: { date: "$timestamp", unit: "hour" } },
+                asdf: { $dateTrunc: { date: "$timestamp", unit: "minute", binSize: groupSize } },
               }
             },
             { $match : { $and: [{ timestamp: { $gte: cutoff } }, { battery_soc: { $ne: 0 } }] } },
             { $group:
                 {
-                    _id: { $dateToString: { format: "%Y-%m-%d-%H", date: "$asdf",timezone: "America/Los_Angeles" } },
+                    _id: { $dateToString: { format: "%Y-%m-%d-%H-%M", date: "$asdf",timezone: "America/Los_Angeles" } },
                     battery_soc: { $avg : "$battery_soc" },
                     battery_voltage: { $avg : "$battery_voltage" },
                     battery_charging_amps: { $avg : "$battery_charging_amps" },
@@ -223,7 +231,7 @@ app.get("/dev/solar_agg", (req, resp) => {
                 }
             },
             { $sort : { "_id" : 1 } },
-            { $limit: 200 }
+            //{ $limit: 200 }
           ]
         )
         .then(users =>

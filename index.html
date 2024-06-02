@@ -11,6 +11,7 @@
   <body>
 
 <select id="hours">
+  <option value="REPLACEME">Custom</option>
   <option value="1">1 hour</option>
   <option value="2">2 hours</option>
   <option value="7">7 hours</option>
@@ -86,6 +87,15 @@ var chart = new Chart(ctx,
         var data = {};
         var hours = $( "#hours" ).val();
         console.log(hours);
+
+if ('URLSearchParams' in window) {
+    var searchParams = new URLSearchParams(window.location.search);
+    if (searchParams.get("hours") != hours) {
+      searchParams.set("hours", hours);
+      window.location.search = searchParams.toString();
+    }
+}
+
         var url = "/dev/solar?hours=" + hours;
         if(hours > 27) {
           url = "/dev/solar_agg?hours=" + hours

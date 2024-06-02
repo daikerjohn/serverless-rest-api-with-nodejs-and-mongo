@@ -3,8 +3,3 @@
 node_modules
 jspm_packages
 
-# Serverless directories
-.serverless
-
-# Environment Variables
-variables.env

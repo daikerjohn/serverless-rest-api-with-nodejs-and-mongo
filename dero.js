@@ -45,14 +45,17 @@ var crypto = require('crypto');
 
 //module.exports.foundKey = async (event, context, callback) => {
 //  context.callbackWaitsForEmptyEventLoop = false;
-app.get("/dev/foundKey", (req, resp) => {
+app.get("/dev/foundKey/:keyincoming", (req, resp) => {
   var theKey = 0n;
-  if (req?.query && req?.query.key) {
-    //console.error("with param: " + event.pathParameters.key);
-    theKey = BigInt('0x' + req.query.key);
+  if (req.params.keyincoming) {
+    theKey = BigInt('0x' + req.params.keyincoming);
   }
+  //if (req?.query && req?.query.key) {
+  //  //console.error("with param: " + event.pathParameters.key);
+  //  theKey = BigInt('0x' + req.query.key);
+  //}
   console.log("theKey: " + theKey);
-  console.log("theKey: " + theKey.toString(16).padStart(64, '0'));
+  console.log("theKey: 0x" + theKey.toString(16).padStart(64, '0'));
   return connectToDatabase()
     .then(() => {
       return FoundKey.create({
@@ -309,7 +312,7 @@ app.get("/dev/getUnfinished/:sizeincoming", (req, resp) => {
       var next_start = 0n;
       var next_end = 0n;
       return findUnfinished().then(any_unfinished => {
-        if (any_unfinished == null || BigInt(any_unfinished.start_key) < 0n) {
+        if (any_unfinished == null || any_unfinished == undefined || BigInt(any_unfinished.start_key) < 0n) {
           //console.info("unfinshed: " + any_unfinished)
           return findRandomStart(size, attempt).then(strt => {
             next_start = strt;
@@ -319,6 +322,7 @@ app.get("/dev/getUnfinished/:sizeincoming", (req, resp) => {
             });
           });
         } else {
+          console.info("unfinshedJS: " + JSON.stringify(any_unfinished))
           resp.send(JSON.stringify(any_unfinished));
           //console.info("unfinshedJS: " + JSON.stringify(any_unfinished))
           //return {
@@ -468,8 +472,8 @@ async function findUnfinished() {
   //var proposedEnd = proposedStart + size_range;
 
   const hoursAgo = new Date();
-  hoursAgo.setHours(hoursAgo.getHours() - 4);
-  return HashRange.findOne({
+  hoursAgo.setHours(hoursAgo.getHours() - 1);
+  return HashRange.find({
       $and: [{
         completed_time: {
           $eq: new Date(0)
@@ -480,6 +484,7 @@ async function findUnfinished() {
         }
       }]
     })
+    .limit(1)
     //.setOptions({
     //  useBigInt64: true
     //})
@@ -488,7 +493,7 @@ async function findUnfinished() {
         //console.log("Nothing unfinished!");
         return null;
       }
-      return hr;
+      return hr[0];
     })
     .catch(err => {
       console.error("err: " + err);
